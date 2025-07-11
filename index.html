@@ -1,0 +1,260 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Personal Expense Tracker</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            /* Custom styles for a better look and feel, using Tailwind for utility classes */
+            body {
+                font-family: 'Inter', sans-serif; /* Using Inter font */
+                background-color: #f0f2f5; /* Light gray background */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh; /* Full viewport height */
+                margin: 0;
+                padding: 20px;
+                box-sizing: border-box; /* Include padding in element's total width and height */
+            }
+
+            .container {
+                background-color: #ffffff; /* White container background */
+                padding: 30px;
+                border-radius: 12px; /* Rounded corners for the container */
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+                width: 100%;
+                max-width: 500px; /* Max width for better readability on large screens */
+                box-sizing: border-box;
+            }
+
+            h1, h2 {
+                color: #333; /* Darker text for headings */
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px; /* Space between form elements */
+                margin-bottom: 30px;
+            }
+
+            label {
+                font-weight: 600; /* Bolder labels */
+                color: #555;
+            }
+
+            input[type="text"],
+            input[type="number"] {
+                padding: 12px;
+                border: 1px solid #ddd; /* Light gray border */
+                border-radius: 8px; /* Rounded input fields */
+                font-size: 1rem;
+                width: 100%; /* Full width inputs */
+                box-sizing: border-box; /* Include padding in width */
+            }
+
+            button {
+                background-color: #4CAF50; /* Green button */
+                color: white;
+                padding: 12px 20px;
+                border: none;
+                border-radius: 8px; /* Rounded buttons */
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 600;
+                transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for hover */
+                box-shadow: 0 2px 5px rgba{0, 0, 0, 0.2}; /* Button shadow */
+            }
+
+            button:hover {
+                background-color: #45a049; /* Darker green on hover */
+                transform: translateY(-2px); /* Slight lift on hover */
+            }
+
+            #expenseList {
+                list-style: none; /* Remove bullet points */
+                padding: 0;
+                margin-bottom: 20px;
+            }
+
+            #expenseList li {
+                background-color: #f9f9f9; /* Light background for list items */
+                padding: 12px 15px;
+                margin-bottom: 10px;
+                border-radius: 8px; /* Rounded list items */
+                display: flex;
+                justify-content: space-between; /* Space out text and button */
+                align-items: center;
+                border: 1px solid #eee; /* Light border */
+            }
+
+            #expenseList li button {
+                background-color: #f44336; /* Red delete button */
+                padding: 8px 12px;
+                font-size: 0.9rem;
+                border-radius: 6px;
+                box-shadow: none; /* No extra shadow for delete button */
+            }
+
+            #expenseList li button:hover {
+                background-color: #da190b; /* Darker red on hover */
+                transform: translateY(-1px);
+            }
+
+            #totalAmount {
+                font-weight: 700; /* Bolder total amount */
+                color: #2196F3; /* Blue color for total */
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Personal Expense Tracker</h1>
+
+            <form id="expenseForm">
+                <label for="expenseName">Expense Name:</label>
+                <input type="text" id="expenseName" placeholder="e.g., Groceries, Transport" required class="rounded-lg">
+
+                <label for="expenseAmount">Expense Amount:</label>
+                <input type="number" id="expenseAmount" placeholder="e.g., 500" required class="rounded-lg">
+
+                <button type="submit" class="rounded-lg">Add Expense</button>
+            </form>
+
+            <h2>Expense List</h2>
+            <ul id="expenseList" class="rounded-lg">
+                <!-- Expenses will be displayed here -->
+            </ul>
+
+            <h2>Total Spent: <span id="totalAmount">0</span></h2>
+        </div>
+
+        <script>
+            // JavaScript logic starts here
+
+            // Array to store all expense objects
+            let expenses = [];
+
+            // Get references to HTML elements
+            const expenseForm = document.getElementById('expenseForm');
+            const expenseNameInput = document.getElementById('expenseName');
+            const expenseAmountInput = document.getElementById('expenseAmount');
+            const expenseList = document.getElementById('expenseList');
+            const totalAmountSpan = document.getElementById('totalAmount');
+
+            /**
+             * Displays the list of expenses in the UI.
+             * Clears the current list and re-renders all expenses from the `expenses` array.
+             * Includes a delete button for each expense.
+             */
+            function displayExpenses() {
+                expenseList.innerHTML = ''; // Clear previous list items to avoid duplicates
+
+                // Loop through the expenses array and create a list item for each expense
+                expenses.forEach(function(expense, index) {
+                    const listItem = document.createElement('li'); // Create a new <li> element
+
+                    // Set the text content for the list item, formatting the amount
+                    // using toLocaleString() for better readability (e.g., 5000 -> 5,000)
+                    listItem.textContent = `${expense.name}: $${expense.amount.toLocaleString()}`;
+
+                    // Create a delete button for each expense item
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    // Attach an event listener to the delete button
+                    deleteButton.onclick = function() {
+                        deleteExpense(index); // Call deleteExpense function with the item's index
+                    };
+
+                    listItem.appendChild(deleteButton); // Add the delete button to the list item
+                    expenseList.appendChild(listItem); // Add the complete list item to the expense list UL
+                });
+            }
+
+            /**
+             * Calculates the total amount of all expenses and updates the display.
+             */
+            function calculateAndDisplayTotal() {
+                let total = 0; // Initialize total sum
+
+                // Iterate over the expenses array and sum up the 'amount' of each expense
+                expenses.forEach(function(expense) {
+                    total += expense.amount;
+                });
+
+                // Update the total amount displayed in the UI, formatted
+                totalAmountSpan.textContent = total.toLocaleString();
+            }
+
+            /**
+             * Deletes an expense from the `expenses` array at a given index.
+             * After deletion, it re-renders the expense list and recalculates the total.
+             * @param {number} index - The index of the expense to be deleted.
+             */
+            function deleteExpense(index) {
+                // Use splice() to remove one element at the specified index
+                expenses.splice(index, 1);
+
+                // Re-render the list and recalculate the total after deletion
+                displayExpenses();
+                calculateAndDisplayTotal();
+            }
+
+            // Add an event listener to the expense form for when it's submitted
+            expenseForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission behavior (page reload)
+
+                // Get the values from the input fields
+                const name = expenseNameInput.value;
+                // Convert the amount input to a floating-point number
+                const amount = parseFloat(expenseAmountInput.value);
+
+                // Input validation:
+                // 1. Check if the name field is empty after trimming whitespace
+                // 2. Check if the amount is Not-a-Number (NaN)
+                // 3. Check if the amount is less than or equal to zero
+                if (name.trim() === '' || isNaN(amount) || amount <= 0) {
+                    // Use a custom alert message (since window.alert() is not allowed in Canvas)
+                    // For a real application, you'd show an in-page message or modal.
+                    // For this assignment, we'll simulate an alert for demonstration.
+                    console.error('Validation Error: Please enter a valid expense name and a positive numeric amount.');
+                    // In a real browser, you might use an alert or a custom modal:
+                    // alert('Please enter a valid expense name and a positive numeric amount.');
+                    return; // Stop the function execution if validation fails
+                }
+
+                // Create a new expense object with the collected name and amount
+                const expense = {
+                    name: name,
+                    amount: amount
+                };
+
+                // Add the new expense object to the `expenses` array
+                expenses.push(expense);
+
+                // Clear the input fields after successfully adding an expense
+                expenseNameInput.value = '';
+                expenseAmountInput.value = '';
+
+                // Update the UI: display the updated list of expenses and the new total
+                displayExpenses();
+                calculateAndDisplayTotal();
+            });
+
+            // Optional: Call displayExpenses and calculateAndDisplayTotal on page load
+            // This is useful if you were loading initial data, but for this assignment,
+            // it just initializes the empty list and total.
+            document.addEventListener('DOMContentLoaded', () => {
+                displayExpenses();
+                calculateAndDisplayTotal();
+            });
+
+            // JavaScript logic ends here
+        </script>
+    </body>
+    </html>
